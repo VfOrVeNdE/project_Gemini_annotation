@@ -1,19 +1,82 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gemini_annotator</title>
+    <title>Gemini Annotation Scroll Test</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.8;
+        color: #333;
+        max-width: 800px; /* 模拟文章宽度 */
+        margin: 0 auto;   /* 居中显示 */
+        padding: 40px 20px;
+      }
+      h1, h2 { color: #1a73e8; }
+      .spacer {
+        height: 600px;
+        background-color: #f5f5f5;
+        border-left: 5px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 40px 0;
+        color: #999;
+      }
+      .test-box {
+        background-color: #e8f0fe;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .right-align {
+        text-align: right; /* 专门测试右边界 */
+        border: 1px dashed red;
+        padding: 10px;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
-      <p>这是一段测试鼠标拖拽的文本，请尝试用鼠标选中我，看看控制台反应如何</p>
-      <p>Gemini Annotation Project Test Text.</p>
+      <h1>Gemini Annotation 滚动测试页 📜</h1>
+      <p>这是一个专门用于测试 ScrollY 和边界检测的长页面。</p>
+
+      <div class="test-box">
+        <h3>1. 顶部测试区 (Top)</h3>
+        <p>请尝试选中这段位于顶部的文字。检查按钮是否会因为没有上方空间而<b>自动翻转到下方</b>？</p>
+      </div>
+
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. 这是一个填充段落，用于增加页面内容。</p>
+
+      <div class="spacer">⬇️ 向下滚动 600px ⬇️</div>
+
+      <h2>2. 中部测试区 (Middle)</h2>
+      <p>这里是页面的中间部分。</p>
+      <p>请在这里选中一段文字。此时 window.scrollY 应该大于 600。</p>
+      <p><b>验证重点：</b>按钮应该紧贴文字，不应该飘在空中，也不应该被卷上去。</p>
+
+      <div class="right-align">
+        <h3>3. 右边缘极限测试 (Right Edge) 🚧</h3>
+        <p>这段文字是<b>靠右对齐</b>的。</p>
+        <p>请尝试选中<b>本行最右边的这几个字</b>。</p>
+        <p>如果你的逻辑正确，按钮应该会感知到屏幕边缘，<b>强制向左移动</b>，而不是被浏览器切断。</p>
+      </div>
+
+      <div class="spacer">⬇️ 继续向下滚动 600px ⬇️</div>
+
+      <div class="test-box">
+        <h3>4. 底部测试区 (Bottom)</h3>
+        <p>这里是页面的最底部。</p>
+        <p>选中我，看看按钮位置计算是否依然精准。</p>
+      </div>
+      
+      <br><br><br><br><br>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
-  
 </html>
 
 <!-- localhost：5173 本地浏览器界面域画面内容 -->
+<!--请务必通过谷歌浏览器F12编辑器模式console终端进行测试-->

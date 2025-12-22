@@ -1,27 +1,39 @@
 console.log("Annotator demo loaded...");
 
-let currentButton = null;                               // initialize current button reference as null, button is mutable
+let currentButton = null;                                                // initialize current button reference as null, button is mutable
+const BUTTON_WIDTH = 120;                                                // button size constants                   
+const BUTTON_HEIGHT = 40;
+const MARGIN = 2;
 
 // listener for mouseup
 document.addEventListener('mouseup', (event) => {
     
-    const selection = window.getSelection();            // get selected text
-    const selectedText = selection.toString().trim();   // get the content to string and remove the spaces
+    const selection = window.getSelection();                             // get selected text
+    const selectedText = selection.toString().trim();                    // get the content to string and remove the spaces
     
     removeButton();
 
     if (selectedText.length > 0) {
-        const range = selection.getRangeAt(0);          // get range of position of text
+        const range = selection.getRangeAt(0);                           // get range of position of text
         const rect = range.getBoundingClientRect();    
 
         console.log("Selected text: ", selectedText);
         console.log("Edge info of position: ", rect);
 
-        const buttonX = rect.left + rect.width + window.scrollX;         // assume the button is put at the right top of selected text
-        const buttonY = rect.top + window.scrollY - 40;                  // 40px above the top edge of selected text
+        let buttonX = rect.left + rect.width + window.scrollX;           // assume the button is put at the right top of selected text
+        let buttonY = rect.top + window.scrollY - BUTTON_HEIGHT + 8;     // 40px above the top edge of selected text
 
-        console.log(`Button position: X=${buttonX}, Y=${buttonY}`);
+        if (rect.top < (BUTTON_HEIGHT + MARGIN)) {
+          console.log("Not enough space above, placing button below the selection.");
+          buttonY = rect.bottom + window.scrollY + MARGIN;
+        }
         
+        const viewPortWidth = document.documentElement.clientWidth;
+        if ((rect.left + rect.width + BUTTON_WIDTH + MARGIN) > viewPortWidth) {
+          console.log("Not enough space on the right, placing button to the left of the selection.");
+          buttonX = viewPortWidth - BUTTON_WIDTH - 20;
+        }
+
         showButton(buttonX, buttonY);
         
         // TODO:
