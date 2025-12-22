@@ -1,24 +1,27 @@
-import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
+console.log("Annotator demo loaded...");
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-    </a>
-    <h1>测试网页 Vite 开始搭建</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more
-    </p>
-  </div>
-`
+// listener for mouseup
+document.addEventListener('mouseup', (event) => {
+    
+    const selection = window.getSelection();            // get selected text
+    const selectedText = selection.toString().trim();   // get the content to string and remove the spaces
+    
+    if (selectedText.length > 0) {
+        const range = selection.getRangeAt(0);          // get range of position of text
+        const rect = range.getBoundingClientRect();    
 
-setupCounter(document.querySelector('#counter'))
+        console.log("Selected text: ", selectedText);
+        console.log("Edge info of position: ", rect);
+
+        const buttonX = rect.left + rect.width;         // assume the button is put at the right top of selected text
+        const buttonY = rect.top;
+
+        console.log(`Button position: X=${buttonX}, Y=${buttonY}`);
+        TODO:
+        handleSelectedText(selectedText);
+
+      } else {
+        console.log("No selected text found.");
+    }
+
+});
