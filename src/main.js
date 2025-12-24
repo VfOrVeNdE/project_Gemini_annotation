@@ -20,7 +20,7 @@ document.addEventListener('mouseup', (event) => {
         console.log("Selected text: ", selectedText);
         console.log("Edge info of position: ", rect);
 
-        // assume button is put at right top of selected text
+        // assume button is put at right-top of selected text
         let buttonX = rect.left + rect.width + window.scrollX;           
         let buttonY = rect.top + window.scrollY - BUTTON_HEIGHT + 8;     
 
