@@ -20,14 +20,17 @@ document.addEventListener('mouseup', (event) => {
         console.log("Selected text: ", selectedText);
         console.log("Edge info of position: ", rect);
 
-        let buttonX = rect.left + rect.width + window.scrollX;           // assume the button is put at the right top of selected text
-        let buttonY = rect.top + window.scrollY - BUTTON_HEIGHT + 8;     // 40px above the top edge of selected text
+        // assume button is put at right top of selected text
+        let buttonX = rect.left + rect.width + window.scrollX;           
+        let buttonY = rect.top + window.scrollY - BUTTON_HEIGHT + 8;     
 
+        // adjust when no enough space above
         if (rect.top < (BUTTON_HEIGHT + MARGIN)) {
           console.log("Not enough space above, placing button below the selection.");
           buttonY = rect.bottom + window.scrollY + MARGIN;
         }
         
+        // adjust when no enough space on the right 
         const viewPortWidth = document.documentElement.clientWidth;
         if ((rect.left + rect.width + BUTTON_WIDTH + MARGIN) > viewPortWidth) {
           console.log("Not enough space on the right, placing button to the left of the selection.");
@@ -154,9 +157,10 @@ function showButton(x, y) {
 }
 
 
+// singleton pattern ensure only one button instance exists
 function removeButton() {
   if (currentButton) {
-    currentButton.remove();
-    currentButton = null;
+    currentButton.remove();        // visually remove from DOM            
+    currentButton = null;          // clear reference in memory
   }
 }
