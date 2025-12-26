@@ -143,7 +143,7 @@ function showButton(x, y, selectedText) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C12 2 14.5 9.5 22 12C14.5 14.5 12 22 12 22C12 22 9.5 14.5 2 12C9.5 9.5 12 2 12 2Z" fill="white"/>
         </svg>
-        Explain this further
+        Ask further
     `;
     
     btn.className = 'gemini-gradient-btn';
@@ -170,6 +170,9 @@ function removeButton() {
   }
 }
 
+
+
+// Annotator Window 打开窗口
 window.createStickyNote = function createStickyNote(x, y, contextText) {
   // 生成唯一 ID
   const noteId = `note_${Date.now()}`;
