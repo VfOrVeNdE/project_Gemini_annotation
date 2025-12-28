@@ -1,4 +1,4 @@
-console.log("Annotator demo loaded...");
+console.log("[Annotator] demo loaded...");
 
 let currentButton = null;                                                // initialize current button reference as null, button is mutable
 const BUTTON_WIDTH = 120;                                                // button size constants                   
@@ -14,13 +14,28 @@ let NOTE_CONFIG = {
     color: '#fd7a7aff'   // 背景颜色
 };
 
+// 是否在拖拽 note
+let isDragging = false;
+
+// 操作是否是和 note 交互的
+let isInteractingWithNote = false;
+
 // listener for mouseup
 document.addEventListener('mouseup', (event) => {
 
     const selection = window.getSelection();                             // get selected text
     const selectedText = selection.toString().trim();                    // get the content to string and remove the spaces
     
-    removeButton();
+    if (isInteractingWithNote){
+        console.log("Blocking global mouseup because interaction started in Note.");
+        isInteractingWithNote = false;
+        return;
+    }
+
+    // remove the last button (if it exists)
+    if (currentButton){
+        removeButton();
+    }
 
     if (selectedText.length > 0) {
         const range = selection.getRangeAt(0);                           // get range of position of text
@@ -126,9 +141,16 @@ function showButton(x, y, selectedText) {
     btn.onmousedown = (e) => {
         e.preventDefault();                
         // 计算一个稍微错开的位置，防止遮住选中的文字
-        if (window.createStickyNote) createStickyNote(x, y + 50, selectedText);
+        if (window.createStickyNote) {
+            createStickyNote(x, y + 50, selectedText);
+        }
         else alert("ERROR! Could not find function 'createStickyNote'! ");
-    };
+    }
+
+    btn.onmouseup = (e) => {
+        e.stopPropagation();
+        removeButton();
+    }
 
     document.body.appendChild(btn);
     currentButton = btn;
@@ -142,10 +164,6 @@ function removeButton() {
     currentButton = null;          // clear reference in memory
   }
 }
-
-
-
-
 
 // Annotator Window 打开窗口
 window.createStickyNote = function createStickyNote(x, y, contextText) {
@@ -244,14 +262,26 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
                 background: transparent;
                 border: none;
                 outline: none;
+
+                width: auto;
+                max-width: 140px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                cursor: text;
+                transition: all 0.2s;
             }
 
-            .title:focus {
-                border-bottom: 2px solid #adb5bd;
-                padding-bottom: 2px;
-                width: 120px;
-                transition: border-color 0.2s;
-                border-bottom-color: ${NOTE_CONFIG.color};
+            .title:not([readonly]) {
+                background: #ffffff;
+                border: 1px solid #4285f4;
+                cursor: text;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            .title[readonly] {
+                cursor: default;
+                user-select: none;
             }
 
             /* 当被固定, Header 鼠标样式变回普通 */
@@ -348,7 +378,7 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
         <div class="note-card" id="card">
             <div class="header" id="dragHeader">
                 
-                <input type="text" id="noteTitle" class="title" value="Note #${activeNotes.size + 1}" spellcheck="false">
+                <input type="text" id="noteTitle" class="title" value="Note #${activeNotes.size + 1}" spellcheck="false" readonly>
                 <button class="pin-btn" id="pinBtn" title="Pin note">${iconPin}</button>
                 <button class="minimize-btn" id "minimizeBtn" title="Minimize note">${iconMinimize}</button>
                 <button class="close-btn" id="closeBtn" title="Close note">${iconClose}</button>
@@ -367,7 +397,6 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
     shadow.appendChild(wrapper);
 
     // 绑定事件逻辑
-    // e.stopPropagation(): 阻止冒泡，防止触发 document 上的其他点击逻辑
 
     // 1. 关闭按钮
     const closeBtn = shadow.getElementById('closeBtn');
@@ -379,9 +408,18 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
     // 2. 阻止点击穿透
     // 例如: 如果用户在 Note 内部点击（比如点输入框），不要让 document 觉得用户点了“空白处”
     const card = shadow.getElementById('card');
-    card.onmousedown = (e) => {
+    card.onmouseup = (e) => { 
+        if (isDragging){
+            return;
+        }
         e.stopPropagation();
+        isInteractingWithNote = false;
     };
+
+    card.onmousedown = (e) => {
+        isInteractingWithNote = true;
+        e.stopPropagation();
+    }
 
     // 3. 切换固定状态
     let isPinned = false; 
@@ -399,27 +437,32 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
 
     // 4. 拖拽功能
     header.onmousedown = (e) => {
-        // 1. 如果固定了，或者点的是关闭/图钉按钮，就不许拖
+        // 如果固定了，或者点的是关闭/图钉按钮，就不许拖
         if (isPinned) return; 
+
+        // 如果在拖拽，防止note 黏在手里
+        isDragging = true;
+
         
         // 防止选中文字
         e.preventDefault(); 
 
-        // 2. 计算鼠标点击点相对于 Host 左上角的偏移
+        // 计算鼠标点击点相对于 Host 左上角的偏移
         // 注意：host 在 light DOM，可以使用 getBoundingClientRect
         const rect = host.getBoundingClientRect();
         const shiftX = e.clientX - rect.left;
         const shiftY = e.clientY - rect.top;
 
-        // 3. 移动函数 (绑定到 document 以防止鼠标移出 iframe/div 范围)
+        // 移动函数 (绑定到 document 以防止鼠标移出 iframe/div 范围)
         const onMouseMove = (moveEvent) => {
-            // 直接修改 host 的位置
-            host.style.left = `${moveEvent.clientX - shiftX}px`;
-            host.style.top = `${moveEvent.clientY - shiftY}px`;
+            // 修改 host 的位置
+            host.style.left = `${moveEvent.clientX - shiftX + window.scrollX}px`;
+            host.style.top = `${moveEvent.clientY - shiftY + window.scrollY}px`;
         };
 
         // 让便签停止跟随鼠标
         const onMouseUp = () => {
+            isDragging = false;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         };
@@ -433,9 +476,16 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
     // 6. 改标题功能
     const titleInput = shadow.getElementById('noteTitle');
     // 阻止拖拽冒泡
-    titleInput.addEventListener('mousedown', (e) => {
+    titleInput.onmousedown = (e) => {
         e.stopPropagation(); 
-    });
+        isInteractingWithNote = true;
+    };
+
+    titleInput.ondblclick = (e) => {
+        titleInput.removeAttribute('readonly');
+        titleInput.focus();
+        titleInput.select(); 
+    };
 
     // 点击/聚焦时，光标永远跳到最后
     titleInput.addEventListener('focus', function() {
@@ -447,12 +497,24 @@ window.createStickyNote = function createStickyNote(x, y, contextText) {
     });
 
     // enter 完成编辑
-    titleInput.addEventListener('keydown', (e) => {
+    titleInput.onkeydown = (e) => {
+        e.stopPropagation();
+        
         if (e.key === 'Enter') {
-            e.target.blur(); // 失去焦点，隐藏光标
+            e.preventDefault();
+            titleInput.blur();
         }
-    });
+    };
 
+    titleInput.onblur = () => {
+        titleInput.setAttribute('readonly', 'true');
+        // 取消文本选中状态 (视觉优化)
+        window.getSelection().removeAllRanges();
+        titleInput.scrollLeft = 0;
+        isInteractingWithNote = false;
+        
+        console.log(`[Annotator] Title renamed to: ${titleInput.value}`);
+    };    
 
     // 加入 activeNotes
     activeNotes.set(noteId, host);
