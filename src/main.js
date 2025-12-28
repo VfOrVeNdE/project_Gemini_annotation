@@ -57,33 +57,6 @@ document.addEventListener('mouseup', (event) => {
 
 });
 
-// button test version
-// function showButton(x, y) {
-
-//   const btn = document.createElement("button");
-//   btn.innerText = "Ask me anything for chosen text";
-//   btn.style.position = "absolute";
-//   btn.style.left = `${x}px`;
-//   btn.style.top = `${y}px`;
-//   btn.style.zIndex = "9999";                            // top layer
-//   btn.style.padding = "5px 10px";
-//   btn.style.backgroundColor = "#1a73e8";              // google blue
-//   btn.style.color = "white";
-//   btn.style.border = "none";
-//   btn.style.borderRadius = "4px";
-//   btn.style.cursor = "pointer";
-//   btn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
-
-//   btn.onmousedown = (e) => {
-//     e.preventDefault();                                  // prevent losing text selection on "button" click
-//     alert("Button clicked! \nSidebar will be expanded here.");
-//   };
-
-//   document.body.appendChild(btn);
-//   currentButton = btn;                                   // store current button reference, each mouseup will only have one button element
-
-// }
-
 // formal version
 function showButton(x, y, selectedText) {
   
@@ -169,6 +142,8 @@ function removeButton() {
     currentButton = null;          // clear reference in memory
   }
 }
+
+
 
 
 
