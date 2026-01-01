@@ -22,7 +22,7 @@ export function createStickyNote(x, y, contextText) {
     // 创建 Host
     const host = document.createElement('div');
     host.id = noteId;
-    
+
     // 基础定位样式
     host.style.position = 'absolute';
     host.style.left = `${x}px`;
@@ -245,20 +245,41 @@ export function createStickyNote(x, y, contextText) {
     wrapper.innerHTML = template;
     shadow.appendChild(wrapper);
 
+    // 在 .body 里插入一个显示 AI 回答的 div
+    // insert a div section of AI response inside .body
+    const body = shadow.querySelector('.body');
+
+    // create a container for AI answer part
+    const answerDiv = document.createElement('div');
+    answerDiv.style.cssText = `
+        font-size: 14px; 
+        line-height: 1.5; 
+        color: #374151; 
+        background: #F3F4F6; 
+        padding: 10px; 
+        border-radius: 6px; 
+        margin-top: 8px;
+    `;
+    answerDiv.innerText = "Gemini is thinking..."; // 初始状态
+    
+    // 把它插在 quote 和 text-area 之间
+    const textarea = body.querySelector('textarea');
+    body.insertBefore(answerDiv, textarea);
+
     // 绑定事件逻辑
 
     // 1. 关闭按钮
     const closeBtn = shadow.getElementById('closeBtn');
     closeBtn.onclick = (e) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         removeStickyNote(noteId);
     };
 
     // 2. 阻止点击穿透
     // 例如: 如果用户在 Note 内部点击（比如点输入框），不要让 document 觉得用户点了“空白处”
     const card = shadow.getElementById('card');
-    card.onmouseup = (e) => { 
-        if (isDragging){
+    card.onmouseup = (e) => {
+        if (isDragging) {
             return;
         }
         e.stopPropagation();
@@ -271,7 +292,7 @@ export function createStickyNote(x, y, contextText) {
     }
 
     // 3. 切换固定状态
-    let isPinned = false; 
+    let isPinned = false;
 
     const pinBtn = shadow.getElementById('pinBtn');
     const header = shadow.getElementById('dragHeader');
@@ -287,14 +308,14 @@ export function createStickyNote(x, y, contextText) {
     // 4. 拖拽功能
     header.onmousedown = (e) => {
         // 如果固定了，或者点的是关闭/图钉按钮，就不许拖
-        if (isPinned) return; 
+        if (isPinned) return;
 
         // 如果在拖拽，防止note 黏在手里
         isDragging = true;
 
-        
+
         // 防止选中文字
-        e.preventDefault(); 
+        e.preventDefault();
 
         // 计算鼠标点击点相对于 Host 左上角的偏移
         // 注意：host 在 light DOM，可以使用 getBoundingClientRect
@@ -326,18 +347,18 @@ export function createStickyNote(x, y, contextText) {
     const titleInput = shadow.getElementById('noteTitle');
     // 阻止拖拽冒泡
     titleInput.onmousedown = (e) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         isInteractingWithNote = true;
     };
 
     titleInput.ondblclick = (e) => {
         titleInput.removeAttribute('readonly');
         titleInput.focus();
-        titleInput.select(); 
+        titleInput.select();
     };
 
     // 点击/聚焦时，光标永远跳到最后
-    titleInput.addEventListener('focus', function() {
+    titleInput.addEventListener('focus', function () {
         const len = this.value.length;
         setTimeout(() => {
             // 将光标选区设置为 (len, len)，也就是最后一个字符后面
@@ -348,7 +369,7 @@ export function createStickyNote(x, y, contextText) {
     // enter 完成编辑
     titleInput.onkeydown = (e) => {
         e.stopPropagation();
-        
+
         if (e.key === 'Enter') {
             e.preventDefault();
             titleInput.blur();
@@ -361,15 +382,25 @@ export function createStickyNote(x, y, contextText) {
         window.getSelection().removeAllRanges();
         titleInput.scrollLeft = 0;
         isInteractingWithNote = false;
-        
+
         console.log(`[Annotator] Title renamed to: ${titleInput.value}`);
-    };    
+    };
 
     // 加入 activeNotes
     activeNotes.set(noteId, host);
+    
+    // 返回一个控制对象，而不是 undefined
+    return {
+        noteID: noteId,
 
-    console.log(`[Annotator] Note Created: ${noteId}`);
-    }
+        updateAnswer: (newText) => {
+            answerDiv.innerText = newText;
+        }
+    };
+
+    // console.log(`[Annotator] Note Created: ${noteId}`);
+
+}
 
 export function removeStickyNote(noteId) {
     if (activeNotes.has(noteId)) {

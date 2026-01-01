@@ -1,5 +1,6 @@
 import { showButton, removeButton} from "./components/button";
 import { createStickyNote, removeStickyNote } from "./components/chatWindow";
+import { askGeminiFurther } from "./api";
 
 console.log("[Annotator] demo loaded...");
 
@@ -56,6 +57,13 @@ document.addEventListener('mouseup', (event) => {
         return;
     }
 
+    let contextText = "";
+    if (selection.anchorNode && selection.anchorNode.parentElement) {
+      contextText = selection.anchorNode.parentElement.innerText;
+
+      if (contextText.length > 1000) { contextText = contextText.substring(0, 1000) + "..." };
+    }
+
     // measuring logic
     if (selectedText.length > 0) {
         const range = selection.getRangeAt(0);                           // get range of position of text
@@ -81,18 +89,36 @@ document.addEventListener('mouseup', (event) => {
           buttonX = viewPortWidth - BUTTON_WIDTH - 20;
         }
 
-        showButton(buttonX, buttonY, selectedText, ()=> {
-            console.log("Ask button clicked.");
+        // showButton(buttonX, buttonY, selectedText, async ()=> {
+        //   console.log("Ask button clicked.");
 
-            removeButton();
+        //   removeButton();
 
-            createStickyNote(buttonX, buttonY + 50, selectedText);
+        //   createStickyNote(buttonX, buttonY + 50, selectedText);
 
-            window.getSelection().removeAllRanges();
-        });
+        //   window.getSelection().removeAllRanges();
+        // });
         
-        // TODO:
-        // handleSelectedText(selectedText);
+        showButton(buttonX, buttonY, selectedText, async () => {
+        
+          console.log("Ask Button Clicked.");
+          
+          removeButton();
+          
+          // 立即创建窗口 (显示 "正在思考...") 现在 createStickyNote 返回的是一个对象 { noteId, updateAnswer }
+          const noteController = createStickyNote(buttonX, buttonY + 50, selectedText);
+          
+          // 异步请求 API (不会卡住界面)
+          console.log("Requesting Gemini...");
+          const answer = await askGeminiFurther(selectedText, contextText);
+          
+          // 拿到结果后，更新窗口内容
+          if (noteController && noteController.updateAnswer) {
+            noteController.updateAnswer(answer);
+            console.log("Content updated!");
+          }
+
+        });
 
       } else {
         console.log("No selected text found.");
