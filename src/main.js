@@ -5,16 +5,15 @@ import { askGeminiFurther } from "./api";
 console.log("[Annotator] demo loaded...");
 
 // data used for measuring distance to edges
-const BUTTON_WIDTH = 120;                                                // button size constants                   
+const BUTTON_WIDTH = 120;                      
 const BUTTON_HEIGHT = 40;
 const MARGIN = 2;
 
-// listener for mouseup
+// listener for mouseup 选词阶段鼠标松开动作监听器
 document.addEventListener('mouseup', (event) => {
 
     // do nothing if click inside button or note
-    // 获取事件的完整路径
-    // [svg, button#closeBtn, div.header, div#note_123, body, html, ...]
+    // 获取事件的完整路径 [svg, button#closeBtn, div.header, div#note_123, body, html, ...]
     const path = event.composedPath();
 
     // 检查点击是否发生在 "Ask Gemini" 按钮上 (普通 DOM)
@@ -88,29 +87,30 @@ document.addEventListener('mouseup', (event) => {
           console.log("Not enough space on the right, placing button to the left of the selection.");
           buttonX = viewPortWidth - BUTTON_WIDTH - 20;
         }
-
-        // showButton(buttonX, buttonY, selectedText, async ()=> {
-        //   console.log("Ask button clicked.");
-
-        //   removeButton();
-
-        //   createStickyNote(buttonX, buttonY + 50, selectedText);
-
-        //   window.getSelection().removeAllRanges();
-        // });
         
+        // 显示ask further按钮
         showButton(buttonX, buttonY, selectedText, async () => {
         
           console.log("Ask Button Clicked.");
           
           removeButton();
           
-          // 立即创建窗口 (显示 "正在思考...") 现在 createStickyNote 返回的是一个对象 { noteId, updateAnswer }
-          const noteController = createStickyNote(buttonX, buttonY + 50, selectedText);
+          // 点击按钮后，不再直接调 API，而是打开窗口，传入一个临时"回调函数" - onComplete
+          createStickyNote(buttonX, buttonY + 50, selectedText, async (userQuestion, onComplete) => {
+            console.log(`User asked: ${userQuestion}`);
+            
+            // 异步请求 API (不会卡住界面)
+            try {
+              console.log("Requesting Gemini.");
+              const answer = await askGeminiFurther(selectedText, contextText, userQuestion);
+              onComplete(answer);
+            } catch (error2){
+              console.error("Sending gateway error: ", error2);
+              onComplete(`Error: ${error2.message}`);           // present on front-end page
+            }
+
+          });
           
-          // 异步请求 API (不会卡住界面)
-          console.log("Requesting Gemini...");
-          const answer = await askGeminiFurther(selectedText, contextText);
           
           // 拿到结果后，更新窗口内容
           if (noteController && noteController.updateAnswer) {

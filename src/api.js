@@ -1,4 +1,10 @@
-export async function askGeminiFurther(selectedText, contextText = "") {
+/**
+ * @param {string} selectedText
+ * @param {string} contextText 
+ * @param {string} userQuestion 
+ */
+
+export async function askGeminiFurther(selectedText, contextText = "", userQuestion) {
 
     const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
     
@@ -10,13 +16,14 @@ export async function askGeminiFurther(selectedText, contextText = "") {
     // construct the sample prompt of context
     const systemPrompt = `
     You are an intelligent and helpful reading assistant. 
-    The user is reading a document. I will provide you with the "Context" (surrounding text) and the "User's Selection".
+    The user is reading a document and this user will provide you with the "Context" (surrounding text), the "User's Selection", and the "User's question".
 
     **YOUR CORE TASKS:**
-    1. Explain the "Selection" clearly and concisely.
-    2. Use the "Context" to understand the specific meaning of the selection in this scenario.
-    3. If the selection is code, explain what it does and its logic.
-    4. Keep the tone professional and friendly.
+    1. Provide an answer based on the content of the "User's question".
+    2. Keep the answer clearly and concisely.
+    3. Use the "Context" to understand the specific meaning of the selection in this scenario.
+    4. If the selection is code, explain what it does and its logic.
+    5. Keep the tone professional and friendly.
 
     **CRITICAL LANGUAGE RULES:**
     You must strictly adapt your output language based on the user's input. Follow this priority order:
@@ -34,6 +41,7 @@ export async function askGeminiFurther(selectedText, contextText = "") {
     const userContent = `
     Context: "...${contextText}..."
     Selection: "${selectedText}"
+    Question: "${userQuestion}"
     `;
 
     // request
@@ -55,7 +63,8 @@ export async function askGeminiFurther(selectedText, contextText = "") {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`)
+            // throw instance of corresponding error
+            throw new Error(`HTTP Error: ${response.status}`);
         }
         
         // get response message from Gemini
@@ -65,7 +74,8 @@ export async function askGeminiFurther(selectedText, contextText = "") {
         const answer = data.candidates[0].content.parts[0].text;
         return answer;
     } catch (error) {
-        console.error("Gemini API Error:", error);
+        // handle the instance of Error thrown above
+        console.error("Gemini API Error: ", error);
         return "Sorry, a network error occurred while connecting to the AI service. Please try again later.";
     }
 }

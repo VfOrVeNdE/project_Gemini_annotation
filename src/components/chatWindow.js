@@ -2,32 +2,33 @@
 
 // decoration of window
 let activeNotes = new Map();            // initialize current StickyNote reference as null map
+let zIndexCounter = 10000;
+
 let NOTE_CONFIG = {
-    width: 300,                         // 默认宽度 (px)
-    minHeight: 200,                     // 默认最小高度 (px)
+    width: 320,                         // 默认宽度 (px)
+    minHeight: 300,                     // 默认最小高度 (px)
     headerHeight: 40,                   // 顶部标题栏高度
     zIndex: 10000,                      // 默认层级
     color: '#ffffff'                  // 背景颜色
 };
 
-let isDragging = false;                 // 是否在拖拽 note
+// let isDragging = false;                 // 是否在拖拽 note
+// let isInteractingWithNote = false;      // 操作是否是和 note 交互的        取消全局变量追踪
 
-let isInteractingWithNote = false;      // 操作是否是和 note 交互的
-
-// Annotator Window 打开窗口
-export function createStickyNote(x, y, contextText) {
-    // 生成唯一 ID
+// annotation window
+export function createStickyNote(x, y, contextText, onSendCallback) {       // the callback when the user clicks Send
+    
+    // generate unique note id
     const noteId = `note_${Date.now()}`;
+    zIndexCounter++;
 
-    // 创建 Host
+    // create host
     const host = document.createElement('div');
     host.id = noteId;
-
-    // 基础定位样式
     host.style.position = 'absolute';
     host.style.left = `${x}px`;
     host.style.top = `${y}px`;
-    host.style.zIndex = NOTE_CONFIG.zIndex;
+    host.style.zIndex = zIndexCounter;
 
     document.body.appendChild(host);
 
@@ -57,9 +58,24 @@ export function createStickyNote(x, y, contextText) {
         </svg>
     `;
 
-    // template decoration
+    // HTML send button
+    const iconSend = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+    `;
+    
+    // HTML loading button
+    const iconLoading = `
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        </svg>
+    `;
+
+    // template decoration (CSS) and structural content mounting (HTML)
     const template = `
         <style>
+            /*-- 各个元素长什么样 CSS decoration --*/
             :host { 
                 all: initial; 
                 box-sizing: border-box; 
@@ -178,7 +194,6 @@ export function createStickyNote(x, y, contextText) {
                 line-height: 1;
                 transition: color 0.2s;
             }
-            
             .minimize-btn:hover { color: ${NOTE_CONFIG.color}; transform: scale(1.1); }
 
 
@@ -207,26 +222,63 @@ export function createStickyNote(x, y, contextText) {
                 overflow: hidden;
             }
 
-            /* 输入框 */
-            textarea {
-                flex: 1;
-                width: 100%;
-                min-height: 80px;
-                border: none;
-                outline: none;
-                resize: none; /* 禁止手动拉伸，保持卡片美观 */
-                font-family: inherit;
-                font-size: 14px;
-                color: #333;
-                background: transparent;
+            /* AI 回答显示的区域 */
+            .answer-area {
+                font-size: 14px; 
+                line-height: 1.6; 
+                color: #1f2937;
+                white-space: pre-wrap; /* 保持换行格式 */
+                margin-top: 10px;      /* 和上面的引用拉开距离 */
             }
-            textarea::placeholder { color: #ced4da; }
+            
+            /* 思考时的灰色斜体样式 */
+            .answer-area.thinking { color: #9ca3af; font-style: italic; }
 
+            /* 底部页脚footer区域 */
+            .footer {
+                padding: 12px; 
+                border-top: 1px solid #f3f4f6; 
+                background: #fff;
+                display: flex; 
+                gap: 8px; 
+                align-items: flex-end; /* 让按钮沉底对齐 */
+                flex-shrink: 0;        /* 防止被压缩 */
+            }
+
+            /* new textarea 新聊天框*/
+            textarea {
+                flex: 1; 
+                max-height: 100px; 
+                min-height: 36px;
+                padding: 8px 12px; 
+                border-radius: 20px;   /* 变成圆角药丸形状 */
+                border: 1px solid #e5e7eb;
+                background: #f9fafb; 
+                resize: none; 
+                outline: none;
+            }
+            textarea:focus { border-color: #6366f1; background: #fff; }     // 当被点击时
+
+            /* 发送按钮 */
+            .send-btn {
+                width: 36px; height: 36px; 
+                border-radius: 50%;         /* 圆形 */
+                border: none;
+                background: #6366f1;      /* 紫色背景 */
+                color: white; 
+                cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .send-btn:hover { background: #4f46e5; }
+            .send-btn:disabled { background: #e5e7eb; cursor: not-allowed; }
+
+            /* Loading animation */
+            .spin { animation: spin 1s linear infinite; }
+            @keyframes spin { 100% { transform: rotate(360deg); } }
         </style>
 
         <div class="note-card" id="card">
-            <div class="header" id="dragHeader">
-                
+            <div class="header" id="dragHeader">        
                 <input type="text" id="noteTitle" class="title" value="Note #${activeNotes.size + 1}" spellcheck="false" readonly>
                 <button class="pin-btn" id="pinBtn" title="Pin note">${iconPin}</button>
                 <button class="minimize-btn" id "minimizeBtn" title="Minimize note">${iconMinimize}</button>
@@ -235,102 +287,116 @@ export function createStickyNote(x, y, contextText) {
             
             <div class="body">
                 <div class="context-quote">"${contextText}"</div>
-                <textarea placeholder="Write something..."></textarea>
+                <div class="answer-area" id="answerArea"></div>
+            </div>
+            
+            <div class="footer">
+                <textarea id="inputBox" placeholder="Ask anything about this text..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn">${iconSend}</button>
             </div>
         </div>
     `;
 
-    // inject DOM
+    // inject DOM (注入)
     const wrapper = document.createElement('div');
     wrapper.innerHTML = template;
     shadow.appendChild(wrapper);
 
-    // 在 .body 里插入一个显示 AI 回答的 div
-    // insert a div section of AI response inside .body
-    const body = shadow.querySelector('.body');
-
-    // create a container for AI answer part
-    const answerDiv = document.createElement('div');
-    answerDiv.style.cssText = `
-        font-size: 14px; 
-        line-height: 1.5; 
-        color: #374151; 
-        background: #F3F4F6; 
-        padding: 10px; 
-        border-radius: 6px; 
-        margin-top: 8px;
-    `;
-    answerDiv.innerText = "Gemini is thinking..."; // 初始状态
-    
-    // 把它插在 quote 和 text-area 之间
-    const textarea = body.querySelector('textarea');
-    body.insertBefore(answerDiv, textarea);
-
-    // 绑定事件逻辑
-
-    // 1. 关闭按钮
+    //  get element
+    const card = shadow.getElementById('card');
+    const header = shadow.getElementById('dragHeader');
+    const pinBtn = shadow.getElementById('pinBtn');
     const closeBtn = shadow.getElementById('closeBtn');
+    const titleInput = shadow.getElementById('noteTitle');
+    const inputBox = shadow.getElementById('inputBox');
+    const sendBtn = shadow.getElementById('sendBtn');
+    const answerArea = shadow.getElementById('answerArea');
+
+
+    // annotation window 窗口内事件逻辑交互绑定 (logic)
+    // 基础交互 (阻止冒泡) Z-index management
+    card.onmousedown = (e) => {
+        host.style.zIndex = ++zIndexCounter;
+        e.stopPropagation();
+    };
+    card.onmouseup = (e) => {
+        isInteractingWithNote = false;
+        e.stopPropagation();                                                // stopPropagation 让动作生效范围只在window内，不会被document更宽泛地捕捉到
+    };
+
+    // 2. 关闭
     closeBtn.onclick = (e) => {
         e.stopPropagation();
         removeStickyNote(noteId);
     };
 
-    // 2. 阻止点击穿透
-    // 例如: 如果用户在 Note 内部点击（比如点输入框），不要让 document 觉得用户点了“空白处”
-    const card = shadow.getElementById('card');
-    card.onmouseup = (e) => {
-        if (isDragging) {
-            return;
-        }
-        e.stopPropagation();
-        isInteractingWithNote = false;
-    };
-
-    card.onmousedown = (e) => {
-        isInteractingWithNote = true;
-        e.stopPropagation();
-    }
-
-    // 3. 切换固定状态
+    // 3. 固定
     let isPinned = false;
-
-    const pinBtn = shadow.getElementById('pinBtn');
-    const header = shadow.getElementById('dragHeader');
-
     pinBtn.onclick = (e) => {
         e.stopPropagation();
         isPinned = !isPinned;
-
-        pinBtn.classList.toggle('pinned', isPinned);
+        pinBtn.classList.toggle('active', isPinned);
         header.classList.toggle('pinned', isPinned);
     };
 
-    // 4. 拖拽功能
+    // 4. 改标题
+    titleInput.onmousedown = (e) => e.stopPropagation();
+    titleInput.ondblclick = () => { titleInput.removeAttribute('readonly'); titleInput.focus(); titleInput.select(); };
+    titleInput.onblur = () => { titleInput.setAttribute('readonly', 'true'); window.getSelection().removeAllRanges(); titleInput.scrollLeft = 0; };
+    titleInput.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); titleInput.blur(); } };
+
+    // 5. 发送逻辑
+    const handleSend = () => {
+        const question = inputBox.value.trim();
+        if (!question) return;
+
+        // UI 状态更新：Loading
+        inputBox.disabled = true;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = `<div class="spin">${iconLoading}</div>`; 
+        
+        answerArea.className = "answer-area thinking";
+        answerArea.innerText = "Gemini is thinking...";
+
+        // 通知 Main.js 去请求 API
+        if (onSendCallback && typeof onSendCallback === 'function') {
+            onSendCallback(question, (response) => {
+                // API 成功返回后的逻辑
+                answerArea.className = "answer-area";
+                answerArea.innerText = response;
+                
+                // 恢复 UI
+                inputBox.disabled = false;
+                inputBox.value = ''; 
+                inputBox.focus();    
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = iconSend; 
+            });
+        }
+    };
+    sendBtn.onclick = handleSend;
+    inputBox.onkeydown = (e) => {
+        e.stopPropagation(); 
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    };
+
+    // 6. 拖拽逻辑
+    let isDragging = false;
     header.onmousedown = (e) => {
-        // 如果固定了，或者点的是关闭/图钉按钮，就不许拖
-        if (isPinned) return;
-
-        // 如果在拖拽，防止note 黏在手里
-        isDragging = true;
-
-
-        // 防止选中文字
+        if (isPinned || e.target.closest("button")) return;
+        
         e.preventDefault();
-
-        // 计算鼠标点击点相对于 Host 左上角的偏移
-        // 注意：host 在 light DOM，可以使用 getBoundingClientRect
+        isDragging = true;
+        
         const rect = host.getBoundingClientRect();
         const shiftX = e.clientX - rect.left;
         const shiftY = e.clientY - rect.top;
 
-        // 移动函数 (绑定到 document 以防止鼠标移出 iframe/div 范围)
         const onMouseMove = (moveEvent) => {
-            // 修改 host 的位置
             host.style.left = `${moveEvent.clientX - shiftX + window.scrollX}px`;
             host.style.top = `${moveEvent.clientY - shiftY + window.scrollY}px`;
         };
 
-        // 让便签停止跟随鼠标
         const onMouseUp = () => {
             isDragging = false;
             document.removeEventListener('mousemove', onMouseMove);
@@ -341,64 +407,159 @@ export function createStickyNote(x, y, contextText) {
         document.addEventListener('mouseup', onMouseUp);
     };
 
-    // 5. 缩放功能
-
-    // 6. 改标题功能
-    const titleInput = shadow.getElementById('noteTitle');
-    // 阻止拖拽冒泡
-    titleInput.onmousedown = (e) => {
-        e.stopPropagation();
-        isInteractingWithNote = true;
-    };
-
-    titleInput.ondblclick = (e) => {
-        titleInput.removeAttribute('readonly');
-        titleInput.focus();
-        titleInput.select();
-    };
-
-    // 点击/聚焦时，光标永远跳到最后
-    titleInput.addEventListener('focus', function () {
-        const len = this.value.length;
-        setTimeout(() => {
-            // 将光标选区设置为 (len, len)，也就是最后一个字符后面
-            this.setSelectionRange(len, len);
-        }, 0);
-    });
-
-    // enter 完成编辑
-    titleInput.onkeydown = (e) => {
-        e.stopPropagation();
-
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            titleInput.blur();
-        }
-    };
-
-    titleInput.onblur = () => {
-        titleInput.setAttribute('readonly', 'true');
-        // 取消文本选中状态 (视觉优化)
-        window.getSelection().removeAllRanges();
-        titleInput.scrollLeft = 0;
-        isInteractingWithNote = false;
-
-        console.log(`[Annotator] Title renamed to: ${titleInput.value}`);
-    };
-
-    // 加入 activeNotes
     activeNotes.set(noteId, host);
+
+
+    // const body = shadow.querySelector('.body');
+
+    // // create a container for AI answer part
+    // const answerDiv = document.createElement('div');
+    // answerDiv.style.cssText = `
+    //     font-size: 14px; 
+    //     line-height: 1.5; 
+    //     color: #374151; 
+    //     background: #F3F4F6; 
+    //     padding: 10px; 
+    //     border-radius: 6px; 
+    //     margin-top: 8px;
+    // `;
+    // answerDiv.innerText = "Gemini is thinking..."; // initial text
     
-    // 返回一个控制对象，而不是 undefined
-    return {
-        noteID: noteId,
+    // // 把它插在 quote 和 text-area 之间
+    // const textarea = body.querySelector('textarea');
+    // body.insertBefore(answerDiv, textarea);
 
-        updateAnswer: (newText) => {
-            answerDiv.innerText = newText;
-        }
-    };
 
-    // console.log(`[Annotator] Note Created: ${noteId}`);
+    // // 绑定事件逻辑
+    // // 关闭
+    // const closeBtn = shadow.getElementById('closeBtn');
+    // closeBtn.onclick = (e) => {
+    //     e.stopPropagation();
+    //     removeStickyNote(noteId);
+    // };
+
+    // // 阻止点击穿透, 如果用户在 Note 内部点击（比如点输入框），不要让 document 觉得用户点了“空白处”
+    // const card = shadow.getElementById('card');
+    // card.onmouseup = (e) => {
+    //     if (isDragging) {
+    //         return;
+    //     }
+    //     e.stopPropagation();
+    //     isInteractingWithNote = false;
+    // };
+
+    // card.onmousedown = (e) => {
+    //     isInteractingWithNote = true;
+    //     e.stopPropagation();
+    // }
+
+    // // 3. 切换固定状态
+    // let isPinned = false;
+    // const pinBtn = shadow.getElementById('pinBtn');
+    // const header = shadow.getElementById('dragHeader');
+
+    // pinBtn.onclick = (e) => {
+    //     e.stopPropagation();
+    //     isPinned = !isPinned;
+
+    //     pinBtn.classList.toggle('pinned', isPinned);
+    //     header.classList.toggle('pinned', isPinned);
+    // };
+
+    // // 4. 拖拽功能
+    // header.onmousedown = (e) => {
+    //     // 如果固定了，或者点的是关闭/图钉按钮，就不许拖
+    //     if (isPinned) return;
+
+    //     // 如果在拖拽，防止note 黏在手里
+    //     isDragging = true;
+
+
+    //     // 防止选中文字
+    //     e.preventDefault();
+
+    //     // 计算鼠标点击点相对于 Host 左上角的偏移
+    //     // 注意：host 在 light DOM，可以使用 getBoundingClientRect
+    //     const rect = host.getBoundingClientRect();
+    //     const shiftX = e.clientX - rect.left;
+    //     const shiftY = e.clientY - rect.top;
+
+    //     // 移动函数 (绑定到 document 以防止鼠标移出 iframe/div 范围)
+    //     const onMouseMove = (moveEvent) => {
+    //         // 修改 host 的位置
+    //         host.style.left = `${moveEvent.clientX - shiftX + window.scrollX}px`;
+    //         host.style.top = `${moveEvent.clientY - shiftY + window.scrollY}px`;
+    //     };
+
+    //     // 让便签停止跟随鼠标
+    //     const onMouseUp = () => {
+    //         isDragging = false;
+    //         document.removeEventListener('mousemove', onMouseMove);
+    //         document.removeEventListener('mouseup', onMouseUp);
+    //     };
+
+    //     document.addEventListener('mousemove', onMouseMove);
+    //     document.addEventListener('mouseup', onMouseUp);
+    // };
+
+    // // 5. 缩放功能
+
+    // // 6. 改标题功能
+    // const titleInput = shadow.getElementById('noteTitle');
+    // // 阻止拖拽冒泡
+    // titleInput.onmousedown = (e) => {
+    //     e.stopPropagation();
+    //     isInteractingWithNote = true;
+    // };
+
+    // titleInput.ondblclick = (e) => {
+    //     titleInput.removeAttribute('readonly');
+    //     titleInput.focus();
+    //     titleInput.select();
+    // };
+
+    // // 点击/聚焦时，光标永远跳到最后
+    // titleInput.addEventListener('focus', function () {
+    //     const len = this.value.length;
+    //     setTimeout(() => {
+    //         // 将光标选区设置为 (len, len)，也就是最后一个字符后面
+    //         this.setSelectionRange(len, len);
+    //     }, 0);
+    // });
+
+    // // enter 完成编辑
+    // titleInput.onkeydown = (e) => {
+    //     e.stopPropagation();
+
+    //     if (e.key === 'Enter') {
+    //         e.preventDefault();
+    //         titleInput.blur();
+    //     }
+    // };
+
+    // titleInput.onblur = () => {
+    //     titleInput.setAttribute('readonly', 'true');
+    //     // 取消文本选中状态 (视觉优化)
+    //     window.getSelection().removeAllRanges();
+    //     titleInput.scrollLeft = 0;
+    //     isInteractingWithNote = false;
+
+    //     console.log(`[Annotator] Title renamed to: ${titleInput.value}`);
+    // };
+
+    // // 加入 activeNotes
+    // activeNotes.set(noteId, host);
+    
+    // // 返回一个控制对象，而不是 undefined
+    // return {
+    //     noteID: noteId,
+
+    //     updateAnswer: (newText) => {
+    //         answerDiv.innerText = newText;
+    //     }
+    // };
+
+    // // console.log(`[Annotator] Note Created: ${noteId}`);
 
 }
 
