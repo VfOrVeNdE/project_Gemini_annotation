@@ -110,13 +110,6 @@ document.addEventListener('mouseup', (event) => {
             }
 
           });
-          
-          
-          // 拿到结果后，更新窗口内容
-          if (noteController && noteController.updateAnswer) {
-            noteController.updateAnswer(answer);
-            console.log("Content updated!");
-          }
 
         });
 

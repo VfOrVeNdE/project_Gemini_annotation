@@ -47,7 +47,7 @@ export function showButton(x, y, selectedText, callback) {
                 box-shadow: 0 6px 20px rgba(26, 115, 232, 0.6);
             }
             .gemini-gradient-btn:active {
-                transform: scale(0.95);
+                box-shadow: 0 2px 10px rgba(26, 115, 232, 0.3), inset 0 0 100px 100px rgba(0, 0, 0, 0.1);
             }
         `;
         document.head.appendChild(style);
@@ -72,7 +72,10 @@ export function showButton(x, y, selectedText, callback) {
     btn.onmousedown = (e) => {
         e.preventDefault();                
         e.stopPropagation();
+    }
 
+    btn.onmouseup = (e) => {
+        e.stopPropagation();
         // check whether callback exists and is a function
         if (callback && typeof callback == 'function') {
             // 执行传入的回调参数
@@ -80,11 +83,9 @@ export function showButton(x, y, selectedText, callback) {
         } else {
             console.log("The callback function was not passed correctly.");
         }
-    }
 
-    btn.onmouseup = (e) => {
-        e.stopPropagation();
         removeButton();
+        console.log("Button Removed");
     }
 
     document.body.appendChild(btn);
