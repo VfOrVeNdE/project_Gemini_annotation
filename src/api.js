@@ -23,7 +23,8 @@ export async function askGeminiFurther(selectedText, contextText = "", userQuest
     2. Keep the answer clearly and concisely.
     3. Use the "Context" to understand the specific meaning of the selection in this scenario.
     4. If the selection is code, explain what it does and its logic.
-    5. Keep the tone professional and friendly.
+    5. Skip the self-introduction. Immediately provide an explanation based on the provided information.
+    6. Keep the tone professional and friendly.
 
     **CRITICAL LANGUAGE RULES:**
     You must strictly adapt your output language based on the user's input. Follow this priority order:
