@@ -60,8 +60,8 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
 
     // HTML send button
     const iconSend = `
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
         </svg>
     `;
     
@@ -235,18 +235,16 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
                 white-space: pre-wrap; /* 保持换行格式 */
                 margin-top: 10px;      /* 和上面的引用拉开距离 */
             }
-            
-            /* 思考时的灰色斜体样式 */
-            .answer-area.thinking { color: #9ca3af; font-style: italic; }
+            .answer-area.thinking { color: #9ca3af; font-style: italic; }   /* 思考时的灰色斜体样式 */
 
-            /* 底部页脚footer区域 */
+            /* 底部涵盖输入框和发送按钮的footer区域 */
             .footer {
-                padding: 12px; 
+                padding: 12px 16px; 
                 border-top: 1px solid #f3f4f6; 
                 background: #fff;
                 display: flex; 
-                gap: 8px; 
-                align-items: flex-end; /* 让按钮沉底对齐 */
+                gap: 10px; 
+                align-items: center;
                 flex-shrink: 0;        /* 防止被压缩 */
             }
 
@@ -254,28 +252,46 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
             textarea {
                 flex: 1; 
                 max-height: 100px; 
-                min-height: 36px;
-                padding: 8px 12px; 
+                min-height: 40px;
+                padding: 10px 14px; 
                 border-radius: 20px;   /* 变成圆角药丸形状 */
                 border: 1px solid #e5e7eb;
-                background: #f9fafb; 
+                background: #f9fafb;
+                
+                /* default text inside area */
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-size: 14px;
+                color: #1f2937;
+                line-height: 1.5;
+
                 resize: none; 
                 outline: none;
+                transition: all 0.2s;
             }
-            textarea:focus { border-color: #6366f1; background: #fff; }     // 当被点击时
+            textarea:focus { 
+                border-color: #6366f1; 
+                background: #fff; 
+                box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            }    
+            textarea::placeholder {color: #9ca3af; font-family: inherit; }
 
             /* 发送按钮 */
             .send-btn {
-                width: 36px; height: 36px; 
-                border-radius: 50%;         /* 圆形 */
+                width: 40px; height: 40px; 
+                border-radius: 50%;         
                 border: none;
-                background: #6366f1;      /* 紫色背景 */
+                background: linear-gradient(135deg, #4285f4 0%, #9b72cb 100%);  
+                box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3); 
+
                 color: white; 
                 cursor: pointer;
                 display: flex; align-items: center; justify-content: center;
+                transition: transform 0.1s, box-shadow: 0.2s;
+                flex-shrink: 0;
             }
-            .send-btn:hover { background: #4f46e5; }
-            .send-btn:disabled { background: #e5e7eb; cursor: not-allowed; }
+            .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); }
+            .send-btn:active { transform: scale(0.95); }
+            .send-btn:disabled { background: #e5e7eb; box-shadow: none; cursor: not-allowed; }
 
             /* Loading animation */
             .spin { animation: spin 1s linear infinite; }
