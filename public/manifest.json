@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Annotator",
+  "version": "1.0.0",
+  "description": "AI reading assistant powered by Gemini",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["main.js"],
+      "css": ["style.css"], 
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["*.png", "*.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
