@@ -46,7 +46,12 @@ export async function askGeminiFurther(selectedText, contextText = "", userQuest
     `;
 
     // request
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${API_KEY}`;
+    
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+
+    // const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;  
+    // const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    // const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
     const payload = {
         contents: [{
