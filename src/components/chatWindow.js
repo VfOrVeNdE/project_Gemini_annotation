@@ -5,12 +5,14 @@ import NoteDock from './noteDock';
 let activeNotes = new Map();            // initialize current StickyNote reference as null map
 let zIndexCounter = 10000;
 
+// 配置
 let NOTE_CONFIG = {
-    width: 320,                         // 默认宽度 (px)
-    minHeight: 300,                     // 默认最小高度 (px)
-    headerHeight: 40,                   // 顶部标题栏高度
-    zIndex: 10000,                      // 默认层级
-    color: '#ffffff',                 // 背景颜色
+    width: 320,                         
+    minWidth: 280,
+    minHeight: 250,                     
+    headerHeight: 40,                   
+    zIndex: 10000,                      
+    color: '#ffffff',                 
     pin_color: '#34a853',
     minimize_color: '#4285f4'
 };
@@ -29,6 +31,7 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
     host.style.left = `${x}px`;
     host.style.top = `${y}px`;
     host.style.zIndex = zIndexCounter;
+    host.style.pointerEvents = 'none';
 
     document.body.appendChild(host);
 
@@ -73,39 +76,283 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
     `;
 
     // template decoration (CSS) and structural content mounting (HTML)
+    // const template = `
+    //     <style>
+    //         /*-- 各个元素长什么样 CSS decoration --*/
+    //         :host { 
+    //             all: initial; 
+    //             box-sizing: border-box; 
+    //             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    //             --theme-color: ${NOTE_CONFIG.color};
+    //         }
+
+    //         .note-card {
+    //             width: ${NOTE_CONFIG.width}px;
+    //             min-height: ${NOTE_CONFIG.minHeight}px;
+    //             background: ${NOTE_CONFIG.color};
+                
+    //             border-radius: 8px;
+    //             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    //             border: 1px solid #e0e0e0;
+                
+    //             display: flex;
+    //             flex-direction: column;
+    //             overflow: hidden;
+                
+    //             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    //             transform-origin: top left;
+    //         }
+
+    //         @keyframes popIn {
+    //             from { opacity: 0; transform: scale(0.8); }
+    //             to { opacity: 1; transform: scale(1); }
+    //         }
+
+    //         /* Header 部分 */
+    //         .header {
+    //             height: ${NOTE_CONFIG.headerHeight}px;
+    //             background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    //             border-bottom: 1px solid #dee2e6;
+    //             display: flex;
+    //             justify-content: space-between;
+    //             align-items: center;
+    //             padding: 0 12px;
+    //             cursor: grab; /* 可拖拽 */
+    //         }
+
+    //         /* Header 中的 title */
+    //         .title-span {
+    //             font-size: 13px;
+    //             font-weight: 600;
+    //             margin-right: auto;
+    //             color: #495057;
+    //             padding: 2px 4px;
+
+    //             max-width: 140px;
+    //             overflow: hidden;
+    //             text-overflow: ellipsis;
+    //             white-space: nowrap;
+                
+    //             cursor: text;
+    //             border: 1px solid transparent;
+    //         }
+
+    //         .title-span:hover {
+    //             background: rgba(0,0,0,0.03);
+    //             border-radius: 4px;
+    //         }
+
+    //         .title-input {
+    //             font-size: 13px;
+    //             font-weight: 600;
+    //             color: #495057;
+    //             padding: 2px 4px;
+    //             margin-right: auto;
+                
+    //             width: 140px;
+    //             outline: none;
+    //             background: #ffffff;
+    //             border: 1px solid #4285f4;
+    //             border-radius: 4px;
+    //             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    //         }
+
+    //         /* 当被固定, Header 鼠标样式变回普通 */
+    //         .header.pinned {
+    //             cursor: default;
+    //             border-bottom: 1px solid #adb5bd;
+    //         }
+            
+    //         /* Header 中的 close button */
+    //         .close-btn {
+    //             background: transparent;
+    //             border: none;
+    //             font-size: 24px;
+    //             color: #adb5bd;
+    //             cursor: pointer;
+    //             padding: 0 5px;
+    //             line-height: 1;
+    //             transition: color 0.2s;
+    //         }
+    //         .close-btn:hover { color: #dc3545; transform: scale(1.1); }
+
+    //         /* Header 中的 pin button */
+    //         .pin-btn {
+    //             background: transparent;
+    //             border: none;
+    //             cursor: pointer;
+    //             padding: 0 5px;
+    //             margin-left: auto;
+    //             color: currentcolor;
+    //             transition: all 0.2s;
+    //             display: flex;
+    //             align-items: center;
+    //         }
+    //         .pin-btn:hover { color: ${NOTE_CONFIG.pin_color}; transform: scale(1.1); }
+    //         .pin-btn.active { color: ${NOTE_CONFIG.pin_color};}
+
+    //         /* Header 中的 minimize button */
+    //         .minimize-btn {
+    //             background: transparent;
+    //             border: none;
+    //             font-size: 24px;
+    //             color: #adb5bd;
+    //             cursor: pointer;
+    //             padding: 0 5px;
+    //             line-height: 1;
+    //             transition: color 0.2s;
+    //         }
+    //         .minimize-btn:hover { color: ${NOTE_CONFIG.minimize_color}; transform: scale(1.1); }
+
+
+    //         /* 2. 内容区域 */
+    //         .body {
+    //             flex: 1;
+    //             padding: 12px;
+    //             display: flex;
+    //             flex-direction: column;
+    //             gap: 10px;
+    //         }
+
+    //         /* 选中的文字引用 */
+    //         .context-quote {
+    //             font-size: 12px;
+    //             color: #666;
+    //             background: #f1f3f4;
+    //             padding: 8px;
+    //             border-left: 3px solid #4285f4;
+    //             border-radius: 2px;
+                
+    //             /* 最多显示3行, 超出省略 */
+    //             display: -webkit-box;
+    //             -webkit-line-clamp: 3;
+    //             -webkit-box-orient: vertical;
+    //             overflow: hidden;
+    //         }
+
+    //         /* AI 回答显示的区域 */
+    //         .answer-area {
+    //             font-size: 14px; 
+    //             line-height: 1.6; 
+    //             color: #1f2937;
+    //             white-space: pre-wrap; /* 保持换行格式 */
+    //             margin-top: 10px;      /* 和上面的引用拉开距离 */
+    //         }
+    //         .answer-area.thinking { color: #9ca3af; font-style: italic; }   /* 思考时的灰色斜体样式 */
+
+    //         /* 底部涵盖输入框和发送按钮的footer区域 */
+    //         .footer {
+    //             padding: 12px 16px; 
+    //             border-top: 1px solid #f3f4f6; 
+    //             background: #fff;
+    //             display: flex; 
+    //             gap: 10px; 
+    //             align-items: center;
+    //             flex-shrink: 0;        /* 防止被压缩 */
+    //         }
+
+    //         /* new textarea 新聊天框*/
+    //         textarea {
+    //             flex: 1; 
+    //             max-height: 100px; 
+    //             min-height: 40px;
+    //             padding: 10px 14px; 
+    //             border-radius: 20px;   /* 变成圆角药丸形状 */
+    //             border: 1px solid #e5e7eb;
+    //             background: #f9fafb;
+                
+    //             /* default text inside area */
+    //             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    //             font-size: 14px;
+    //             color: #1f2937;
+    //             line-height: 1.5;
+
+    //             resize: none; 
+    //             outline: none;
+    //             transition: all 0.2s;
+    //         }
+    //         textarea:focus { 
+    //             border-color: #6366f1; 
+    //             background: #fff; 
+    //             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    //         }    
+    //         textarea::placeholder {color: #9ca3af; font-family: inherit; }
+
+    //         /* 发送按钮 */
+    //         .send-btn {
+    //             width: 40px; height: 40px; 
+    //             border-radius: 50%;         
+    //             border: none;
+    //             background: linear-gradient(135deg, #4285f4 0%, #9b72cb 100%);  
+    //             box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3); 
+
+    //             color: white; 
+    //             cursor: pointer;
+    //             display: flex; align-items: center; justify-content: center;
+    //             transition: transform 0.1s, box-shadow: 0.2s;
+    //             flex-shrink: 0;
+    //         }
+    //         .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); }
+    //         .send-btn:active { transform: scale(0.95); }
+    //         .send-btn:disabled { background: #e5e7eb; box-shadow: none; cursor: not-allowed; }
+
+    //         /* Loading animation */
+    //         .spin { animation: spin 1s linear infinite; }
+    //         @keyframes spin { 100% { transform: rotate(360deg); } }
+    //     </style>
+
+    //     <div class="note-card" id="card">
+    //         <div class="header" id="dragHeader">  
+    //             <span id="titleSpan" class="title-span">Note #${activeNotes.size + 1}</span>      
+    //             <input type="text" id="noteTitle" class="title-input" value="Note #${activeNotes.size + 1}" spellcheck="false" style="display:none;">
+                
+    //             <button class="pin-btn" id="pinBtn" title="Pin note">${iconPin}</button>
+    //             <button class="minimize-btn" id="minimizeBtn" title="Minimize note">${iconMinimize}</button>
+    //             <button class="close-btn" id="closeBtn" title="Close note">${iconClose}</button>
+    //         </div>
+            
+    //         <div class="body">
+    //             <div class="context-quote">"${contextText}"</div>
+    //             <div class="answer-area" id="answerArea"></div>
+    //         </div>
+            
+    //         <div class="footer">
+    //             <textarea id="inputBox" placeholder="Ask anything about this text..." rows="1"></textarea>
+    //             <button class="send-btn" id="sendBtn">${iconSend}</button>
+    //         </div>
+    //     </div>
+    // `;
+
     const template = `
         <style>
-            /*-- 各个元素长什么样 CSS decoration --*/
             :host { 
                 all: initial; 
                 box-sizing: border-box; 
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                --theme-color: ${NOTE_CONFIG.color};
             }
 
             .note-card {
+                /* 注意：这里设置 pointer-events: auto，因为 host 设置了 none */
+                pointer-events: auto; 
                 width: ${NOTE_CONFIG.width}px;
+                height: auto; 
+                min-width: ${NOTE_CONFIG.minWidth}px;
                 min-height: ${NOTE_CONFIG.minHeight}px;
-                background: ${NOTE_CONFIG.color};
                 
+                background: ${NOTE_CONFIG.color};
                 border-radius: 8px;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.15);
                 border: 1px solid #e0e0e0;
                 
                 display: flex;
                 flex-direction: column;
-                overflow: hidden;
+                overflow: visible; /* 必须允许 resizer 溢出一点点或者位于边界 */
+                position: relative; 
                 
                 animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
                 transform-origin: top left;
             }
 
-            @keyframes popIn {
-                from { opacity: 0; transform: scale(0.8); }
-                to { opacity: 1; transform: scale(1); }
-            }
-
-            /* Header 部分 */
             .header {
                 height: ${NOTE_CONFIG.headerHeight}px;
                 background: linear-gradient(to right, #f8f9fa, #e9ecef);
@@ -114,104 +361,40 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
                 justify-content: space-between;
                 align-items: center;
                 padding: 0 12px;
-                cursor: grab; /* 可拖拽 */
+                cursor: grab;
+                flex-shrink: 0; 
+                user-select: none;
             }
+            .header:active { cursor: grabbing; }
 
-            /* Header 中的 title */
-            .title-span {
-                font-size: 13px;
-                font-weight: 600;
-                margin-right: auto;
-                color: #495057;
-                padding: 2px 4px;
-
-                max-width: 140px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                
-                cursor: text;
-                border: 1px solid transparent;
-            }
-
-            .title-span:hover {
-                background: rgba(0,0,0,0.03);
-                border-radius: 4px;
-            }
-
-            .title-input {
-                font-size: 13px;
-                font-weight: 600;
-                color: #495057;
-                padding: 2px 4px;
-                margin-right: auto;
-                
-                width: 140px;
-                outline: none;
-                background: #ffffff;
-                border: 1px solid #4285f4;
-                border-radius: 4px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-
-            /* 当被固定, Header 鼠标样式变回普通 */
-            .header.pinned {
-                cursor: default;
-                border-bottom: 1px solid #adb5bd;
-            }
+            /* Header 内部样式 */
+            .title-span { font-size: 13px; font-weight: 600; margin-right: auto; color: #495057; padding: 2px 4px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; border: 1px solid transparent; }
+            .title-span:hover { background: rgba(0,0,0,0.03); border-radius: 4px; }
+            .title-input { font-size: 13px; font-weight: 600; color: #495057; padding: 2px 4px; margin-right: auto; width: 140px; outline: none; background: #ffffff; border: 1px solid #4285f4; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .header.pinned { cursor: default; border-bottom: 1px solid #adb5bd; }
             
-            /* Header 中的 close button */
-            .close-btn {
-                background: transparent;
-                border: none;
-                font-size: 24px;
-                color: #adb5bd;
-                cursor: pointer;
-                padding: 0 5px;
-                line-height: 1;
-                transition: color 0.2s;
-            }
+            .close-btn, .minimize-btn { background: transparent; border: none; font-size: 24px; color: #adb5bd; cursor: pointer; padding: 0 5px; line-height: 1; transition: color 0.2s; }
             .close-btn:hover { color: #dc3545; transform: scale(1.1); }
-
-            /* Header 中的 pin button */
-            .pin-btn {
-                background: transparent;
-                border: none;
-                cursor: pointer;
-                padding: 0 5px;
-                margin-left: auto;
-                color: currentcolor;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-            }
+            .minimize-btn:hover { color: ${NOTE_CONFIG.minimize_color}; transform: scale(1.1); }
+            
+            .pin-btn { background: transparent; border: none; cursor: pointer; padding: 0 5px; margin-left: auto; color: currentcolor; transition: all 0.2s; display: flex; align-items: center; }
             .pin-btn:hover { color: ${NOTE_CONFIG.pin_color}; transform: scale(1.1); }
             .pin-btn.active { color: ${NOTE_CONFIG.pin_color};}
 
-            /* Header 中的 minimize button */
-            .minimize-btn {
-                background: transparent;
-                border: none;
-                font-size: 24px;
-                color: #adb5bd;
-                cursor: pointer;
-                padding: 0 5px;
-                line-height: 1;
-                transition: color 0.2s;
-            }
-            .minimize-btn:hover { color: ${NOTE_CONFIG.minimize_color}; transform: scale(1.1); }
-
-
-            /* 2. 内容区域 */
             .body {
-                flex: 1;
+                flex: 1;            
                 padding: 12px;
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
+                overflow-y: auto;   
+                scrollbar-width: thin;
+                scrollbar-color: #e0e0e0 transparent;
             }
+            .body::-webkit-scrollbar { width: 6px; }
+            .body::-webkit-scrollbar-track { background: transparent; }
+            .body::-webkit-scrollbar-thumb { background-color: #e0e0e0; border-radius: 20px; }
 
-            /* 选中的文字引用 */
             .context-quote {
                 font-size: 12px;
                 color: #666;
@@ -219,25 +402,22 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
                 padding: 8px;
                 border-left: 3px solid #4285f4;
                 border-radius: 2px;
-                
-                /* 最多显示3行, 超出省略 */
                 display: -webkit-box;
                 -webkit-line-clamp: 3;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
+                flex-shrink: 0;
             }
 
-            /* AI 回答显示的区域 */
             .answer-area {
                 font-size: 14px; 
                 line-height: 1.6; 
                 color: #1f2937;
-                white-space: pre-wrap; /* 保持换行格式 */
-                margin-top: 10px;      /* 和上面的引用拉开距离 */
+                white-space: pre-wrap; 
+                margin-top: 10px;      
             }
-            .answer-area.thinking { color: #9ca3af; font-style: italic; }   /* 思考时的灰色斜体样式 */
+            .answer-area.thinking { color: #9ca3af; font-style: italic; }
 
-            /* 底部涵盖输入框和发送按钮的footer区域 */
             .footer {
                 padding: 12px 16px; 
                 border-top: 1px solid #f3f4f6; 
@@ -245,60 +425,56 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
                 display: flex; 
                 gap: 10px; 
                 align-items: center;
-                flex-shrink: 0;        /* 防止被压缩 */
+                flex-shrink: 0;     
             }
 
-            /* new textarea 新聊天框*/
-            textarea {
-                flex: 1; 
-                max-height: 100px; 
-                min-height: 40px;
-                padding: 10px 14px; 
-                border-radius: 20px;   /* 变成圆角药丸形状 */
-                border: 1px solid #e5e7eb;
-                background: #f9fafb;
-                
-                /* default text inside area */
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                font-size: 14px;
-                color: #1f2937;
-                line-height: 1.5;
-
-                resize: none; 
-                outline: none;
-                transition: all 0.2s;
-            }
-            textarea:focus { 
-                border-color: #6366f1; 
-                background: #fff; 
-                box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-            }    
+            textarea { flex: 1; max-height: 100px; min-height: 40px; padding: 10px 14px; border-radius: 20px; border: 1px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 14px; color: #1f2937; line-height: 1.5; resize: none; outline: none; transition: all 0.2s; }
+            textarea:focus { border-color: #6366f1; background: #fff; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }    
             textarea::placeholder {color: #9ca3af; font-family: inherit; }
-
-            /* 发送按钮 */
-            .send-btn {
-                width: 40px; height: 40px; 
-                border-radius: 50%;         
-                border: none;
-                background: linear-gradient(135deg, #4285f4 0%, #9b72cb 100%);  
-                box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3); 
-
-                color: white; 
-                cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-                transition: transform 0.1s, box-shadow: 0.2s;
-                flex-shrink: 0;
-            }
+            .send-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: linear-gradient(135deg, #4285f4 0%, #9b72cb 100%); box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s, box-shadow: 0.2s; flex-shrink: 0; }
             .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); }
             .send-btn:active { transform: scale(0.95); }
             .send-btn:disabled { background: #e5e7eb; box-shadow: none; cursor: not-allowed; }
-
-            /* Loading animation */
             .spin { animation: spin 1s linear infinite; }
+            @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
             @keyframes spin { 100% { transform: rotate(360deg); } }
+
+            /* --- 全方向 Resizer 样式 --- */
+            .resizer {
+                position: absolute;
+                background: transparent; /* 平时看不见 */
+                z-index: 999;
+                /* 调试时可以把 opacity 改成 0.5 看看位置 */
+            }
+
+            /* 边 (Sides) - 6px 宽/高，方便鼠标抓取 */
+            .resizer.n { top: -3px; left: 0; right: 0; height: 6px; cursor: n-resize; }
+            .resizer.s { bottom: -3px; left: 0; right: 0; height: 6px; cursor: s-resize; }
+            .resizer.e { right: -3px; top: 0; bottom: 0; width: 6px; cursor: e-resize; }
+            .resizer.w { left: -3px; top: 0; bottom: 0; width: 6px; cursor: w-resize; }
+
+            /* 角 (Corners) - 10px 大小 */
+            .resizer.ne { top: -5px; right: -5px; width: 12px; height: 12px; cursor: ne-resize; z-index: 1000; }
+            .resizer.nw { top: -5px; left: -5px; width: 12px; height: 12px; cursor: nw-resize; z-index: 1000; }
+            .resizer.se { bottom: -5px; right: -5px; width: 12px; height: 12px; cursor: se-resize; z-index: 1000; }
+            .resizer.sw { bottom: -5px; left: -5px; width: 12px; height: 12px; cursor: sw-resize; z-index: 1000; }
+
+            .note-card.pinned .resizer {
+                pointer-events: none;  /* 彻底禁用鼠标交互 */
+                display: none;         /* 或者直接隐藏，看你喜好 */
+            }
         </style>
 
         <div class="note-card" id="card">
+            <div class="resizer n" data-dir="n"></div>
+            <div class="resizer s" data-dir="s"></div>
+            <div class="resizer e" data-dir="e"></div>
+            <div class="resizer w" data-dir="w"></div>
+            <div class="resizer ne" data-dir="ne"></div>
+            <div class="resizer nw" data-dir="nw"></div>
+            <div class="resizer se" data-dir="se"></div>
+            <div class="resizer sw" data-dir="sw"></div>
+
             <div class="header" id="dragHeader">  
                 <span id="titleSpan" class="title-span">Note #${activeNotes.size + 1}</span>      
                 <input type="text" id="noteTitle" class="title-input" value="Note #${activeNotes.size + 1}" spellcheck="false" style="display:none;">
@@ -314,7 +490,7 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
             </div>
             
             <div class="footer">
-                <textarea id="inputBox" placeholder="Ask anything about this text..." rows="1"></textarea>
+                <textarea id="inputBox" placeholder="Ask anything..." rows="1"></textarea>
                 <button class="send-btn" id="sendBtn">${iconSend}</button>
             </div>
         </div>
@@ -336,6 +512,7 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
     const inputBox = shadow.getElementById('inputBox');
     const sendBtn = shadow.getElementById('sendBtn');
     const answerArea = shadow.getElementById('answerArea');
+    const resizers = shadow.querySelectorAll('.resizer');
 
     
 
@@ -360,6 +537,7 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
         isPinned = !isPinned;
         pinBtn.classList.toggle('active', isPinned);
         header.classList.toggle('pinned', isPinned);
+        card.classList.toggle('pinned', isPinned);
     };
 
     // 4. 最小化
@@ -470,6 +648,93 @@ export function createStickyNote(x, y, contextText, onSendCallback) {       // t
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     };
+
+    resizers.forEach(resizer => {
+        resizer.onmousedown = (e) => {
+            if (isPinned) return;
+
+            e.stopPropagation(); 
+            e.preventDefault(); 
+
+            const direction = resizer.getAttribute('data-dir'); // 获取方向 (n, s, e, w, ne, nw...)
+            
+            // 记录初始数据
+            const startX = e.clientX;
+            const startY = e.clientY;
+            
+            // 尺寸从 card 获取
+            const startWidth = card.offsetWidth;
+            const startHeight = card.offsetHeight;
+            
+            // 位置从 host 获取 (解析 '100px' -> 100)
+            const startLeft = parseFloat(host.style.left); 
+            const startTop = parseFloat(host.style.top);
+
+            const onResizeMove = (moveEvent) => {
+                const dx = moveEvent.clientX - startX;
+                const dy = moveEvent.clientY - startY;
+
+                let newWidth = startWidth;
+                let newHeight = startHeight;
+                let newLeft = startLeft;
+                let newTop = startTop;
+
+                // --- 逻辑分支：根据方向计算 ---
+
+                // 1. 东 (右边变宽)
+                if (direction.includes('e')) {
+                    newWidth = startWidth + dx;
+                }
+
+                // 2. 南 (下边变高)
+                if (direction.includes('s')) {
+                    newHeight = startHeight + dy;
+                }
+
+                // 3. 西 (左边拖拽：变宽 + 左移)
+                if (direction.includes('w')) {
+                    newWidth = startWidth - dx;
+                    // 只有当宽度没有触底最小宽度时，才移动 Left
+                    if (newWidth > NOTE_CONFIG.minWidth) {
+                        newLeft = startLeft + dx;
+                    } else {
+                        newWidth = NOTE_CONFIG.minWidth; // 锁死最小宽
+                    }
+                }
+
+                // 4. 北 (上边拖拽：变高 + 上移)
+                if (direction.includes('n')) {
+                    newHeight = startHeight - dy;
+                    // 只有当高度没有触底最小高度时，才移动 Top
+                    if (newHeight > NOTE_CONFIG.minHeight) {
+                        newTop = startTop + dy;
+                    } else {
+                        newHeight = NOTE_CONFIG.minHeight; // 锁死最小高
+                    }
+                }
+
+                // --- 应用限制 (Clamp) ---
+                if (newWidth < NOTE_CONFIG.minWidth) newWidth = NOTE_CONFIG.minWidth;
+                if (newHeight < NOTE_CONFIG.minHeight) newHeight = NOTE_CONFIG.minHeight;
+
+                // --- 写入 DOM ---
+                card.style.width = `${newWidth}px`;
+                card.style.height = `${newHeight}px`;
+                
+                // 只有涉及左/上移动时才写 host
+                if (direction.includes('w')) host.style.left = `${newLeft}px`;
+                if (direction.includes('n')) host.style.top = `${newTop}px`;
+            };
+
+            const onResizeUp = () => {
+                document.removeEventListener('mousemove', onResizeMove);
+                document.removeEventListener('mouseup', onResizeUp);
+            };
+
+            document.addEventListener('mousemove', onResizeMove);
+            document.addEventListener('mouseup', onResizeUp);
+        };
+    });
 
     activeNotes.set(noteId, host);
 }
